@@ -1,11 +1,16 @@
 import React from 'react';
+import { useLocation } from 'react-router-dom';
 import { Flame, Shield } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { useAppStore } from '../../store/appStore';
+import { ModeSwitchHeader } from './ModeSwitchHeader';
 
 export const Topbar = ({ title }) => {
+  const location = useLocation();
   const user = useAuthStore((s) => s.user);
   const summary = useAppStore((s) => s.summary);
+
+  const isRescue = location.pathname.startsWith('/exam-rescue');
 
   const streak = summary?.streak?.current_streak ?? 0;
   const level = summary?.xp?.level ?? 1;
@@ -26,27 +31,50 @@ export const Topbar = ({ title }) => {
         background: 'rgba(12, 14, 17, 0.88)',
         backdropFilter: 'blur(12px)',
         WebkitBackdropFilter: 'blur(12px)',
-        borderBottom: '1px solid var(--border)',
+        borderBottom: `1px solid ${isRescue ? 'rgba(239, 68, 68, 0.25)' : 'var(--border)'}`,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
         padding: '0 24px',
+        gap: '16px',
       }}
     >
-      {/* Page title */}
-      <h2
+      {/* Top warrior accent edge line for Exam Rescue vs Skill Path */}
+      <div
         style={{
-          fontSize: 'var(--text-md)',
-          fontWeight: 600,
-          color: 'var(--text-primary)',
-          letterSpacing: '-0.02em',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: '2px',
+          background: isRescue
+            ? 'linear-gradient(90deg, #EF4444 0%, #F97316 50%, transparent 100%)'
+            : 'linear-gradient(90deg, var(--accent) 0%, transparent 70%)',
+          transition: 'background var(--t-base)',
         }}
-      >
-        {title}
-      </h2>
+      />
+
+      {/* Page title + Mode switcher */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '16px', minWidth: 0 }}>
+        <h2
+          style={{
+            fontSize: 'var(--text-md)',
+            fontWeight: 600,
+            color: 'var(--text-primary)',
+            letterSpacing: '-0.02em',
+            margin: 0,
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {title}
+        </h2>
+        <div className="topbar-mode-switcher">
+          <ModeSwitchHeader />
+        </div>
+      </div>
 
       {/* Right: compact stat pills */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
         {/* Streak */}
         {streak > 0 && (
           <div
@@ -108,6 +136,15 @@ export const Topbar = ({ title }) => {
           {displayUser}
         </div>
       </div>
+
+      <style>{`
+        @media (max-width: 640px) {
+          .topbar-mode-switcher {
+            display: none;
+          }
+        }
+      `}</style>
     </header>
   );
 };
+

@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from app.models.roadmap import Roadmap
 from app.models.task import DailyPlan, Task
 from app.models.gamification import Streak, UserXP
+from app.models.exam_rescue import ExamSession, ExamTopicPlan
 from alembic import context
 
 # --------------------------------------------------

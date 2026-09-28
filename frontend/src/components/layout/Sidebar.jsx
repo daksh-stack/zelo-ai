@@ -13,10 +13,11 @@ import { useAuthStore } from '../../store/authStore';
 import { useAppStore } from '../../store/appStore';
 
 const NAV_ITEMS = [
-  { label: 'Missions',  sublabel: 'Today',    path: '/dashboard', icon: LayoutDashboard },
-  { label: 'Campaign',  sublabel: 'Roadmap',   path: '/roadmap',   icon: Map },
-  { label: 'Progress',  sublabel: 'Rank',      path: '/progress',  icon: TrendingUp },
-  { label: 'Profile',   sublabel: 'Settings',  path: '/profile',   icon: User },
+  { label: 'Missions',    sublabel: 'Today',       path: '/dashboard',   icon: LayoutDashboard },
+  { label: 'Exam Rescue', sublabel: 'Crash Coach', path: '/exam-rescue', icon: Flame, isRescue: true },
+  { label: 'Campaign',    sublabel: 'Roadmap',     path: '/roadmap',     icon: Map },
+  { label: 'Progress',    sublabel: 'Rank',        path: '/progress',    icon: TrendingUp },
+  { label: 'Profile',     sublabel: 'Settings',    path: '/profile',     icon: User },
 ];
 
 export const Sidebar = () => {
@@ -166,52 +167,60 @@ export const Sidebar = () => {
             <NavLink
               key={item.path}
               to={item.path}
-              style={({ isActive }) => ({
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-                padding: '8px 10px',
-                borderRadius: 'var(--radius-lg)',
-                fontSize: 'var(--text-sm)',
-                fontWeight: isActive ? 600 : 500,
-                letterSpacing: '-0.01em',
-                color: isActive ? 'var(--accent)' : 'var(--text-secondary)',
-                background: isActive ? 'var(--accent-dim)' : 'transparent',
-                border: isActive ? '1px solid var(--accent-border)' : '1px solid transparent',
-                textDecoration: 'none',
-                transition: `all var(--t-base)`,
-              })}
+              style={({ isActive }) => {
+                const activeColor = item.isRescue ? '#EF4444' : 'var(--accent)';
+                const activeBg = item.isRescue ? 'rgba(239, 68, 68, 0.12)' : 'var(--accent-dim)';
+                const activeBorder = item.isRescue ? 'rgba(239, 68, 68, 0.35)' : 'var(--accent-border)';
+                return {
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  padding: '8px 10px',
+                  borderRadius: 'var(--radius-lg)',
+                  fontSize: 'var(--text-sm)',
+                  fontWeight: isActive ? 600 : 500,
+                  letterSpacing: '-0.01em',
+                  color: isActive ? activeColor : 'var(--text-secondary)',
+                  background: isActive ? activeBg : 'transparent',
+                  border: isActive ? `1px solid ${activeBorder}` : '1px solid transparent',
+                  textDecoration: 'none',
+                  transition: `all var(--t-base)`,
+                };
+              }}
               onMouseEnter={(e) => {
-                if (!e.currentTarget.style.background.includes('accent-dim')) {
+                if (!e.currentTarget.style.background.includes('accent-dim') && !e.currentTarget.style.background.includes('239')) {
                   e.currentTarget.style.background = 'var(--bg-elevated)';
                 }
               }}
               onMouseLeave={(e) => {
-                if (!e.currentTarget.style.background.includes('accent-dim')) {
+                if (!e.currentTarget.style.background.includes('accent-dim') && !e.currentTarget.style.background.includes('239')) {
                   e.currentTarget.style.background = 'transparent';
                 }
               }}
             >
-              {({ isActive }) => (
-                <>
-                  <Icon size={16} />
-                  <div style={{ flex: 1 }}>
-                    <div style={{ lineHeight: 1.2 }}>{item.label}</div>
-                    <div style={{ fontSize: '0.65rem', color: isActive ? 'var(--accent-dim, rgba(56,189,248,0.6))' : 'var(--text-tertiary)', fontWeight: 500, letterSpacing: '0.01em' }}>
-                      {item.sublabel}
+              {({ isActive }) => {
+                const activeColor = item.isRescue ? '#EF4444' : 'var(--accent)';
+                return (
+                  <>
+                    <Icon size={16} color={isActive ? activeColor : undefined} />
+                    <div style={{ flex: 1 }}>
+                      <div style={{ lineHeight: 1.2 }}>{item.label}</div>
+                      <div style={{ fontSize: '0.65rem', color: isActive ? activeColor : 'var(--text-tertiary)', fontWeight: 500, opacity: isActive ? 0.9 : 1, letterSpacing: '0.01em' }}>
+                        {item.sublabel}
+                      </div>
                     </div>
-                  </div>
-                  {isActive && (
-                    <div style={{
-                      width: '4px',
-                      height: '4px',
-                      borderRadius: '50%',
-                      background: 'var(--accent)',
-                      flexShrink: 0,
-                    }} />
-                  )}
-                </>
-              )}
+                    {isActive && (
+                      <div style={{
+                        width: '4px',
+                        height: '4px',
+                        borderRadius: '50%',
+                        background: activeColor,
+                        flexShrink: 0,
+                      }} />
+                    )}
+                  </>
+                );
+              }}
             </NavLink>
           );
         })}

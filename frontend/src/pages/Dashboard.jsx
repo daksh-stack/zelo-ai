@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import {
   Play,
   RotateCcw,
@@ -9,6 +10,8 @@ import {
   Clock,
   Shield,
   Target,
+  Flame,
+  ArrowRight,
 } from 'lucide-react';
 import { AppShell } from '../components/layout/AppShell';
 import { Card } from '../components/ui/Card';
@@ -19,6 +22,7 @@ import { showToast } from '../components/ui/Toast';
 import { getProgressSummaryApi } from '../api/progress';
 import { getTodayTasksApi, completeTaskApi } from '../api/tasks';
 import { getCurrentRoadmapApi } from '../api/roadmaps';
+import { listExamSessions } from '../api/examRescue';
 import { useAppStore } from '../store/appStore';
 import { TaskCard } from '../components/dashboard/TaskCard';
 import { StreakWidget } from '../components/dashboard/StreakWidget';
@@ -27,6 +31,7 @@ import { RoadmapPhaseWidget } from '../components/dashboard/RoadmapPhaseWidget';
 import { CelebrationModal } from '../components/dashboard/CelebrationModal';
 
 export const Dashboard = () => {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const setSummary = useAppStore((s) => s.setSummary);
 
@@ -213,6 +218,9 @@ export const Dashboard = () => {
           </div>
         </Card>
 
+        {/* Exam Rescue Teaser Card */}
+        <ExamRescueTeaserCard navigate={navigate} />
+
         {/* Main Grid Layout (70% Left / 30% Right) */}
         <div className="dashboard-grid">
           {/* LEFT COLUMN */}
@@ -342,5 +350,85 @@ export const Dashboard = () => {
         }
       `}</style>
     </AppShell>
+  );
+};
+
+const ExamRescueTeaserCard = ({ navigate }) => {
+  const { data: sessionsData } = useQuery({
+    queryKey: ['examSessionsListTeaser'],
+    queryFn: listExamSessions,
+    retry: false,
+    staleTime: 30000,
+  });
+
+  const sessionsList = Array.isArray(sessionsData)
+    ? sessionsData
+    : sessionsData?.sessions || sessionsData?.data || [];
+
+  const activeSession = sessionsList.find(
+    (s) => s.status !== 'completed' && s.status !== 'finished'
+  );
+
+  return (
+    <div
+      style={{
+        background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.12) 0%, rgba(249, 115, 22, 0.06) 100%)',
+        border: '1px solid rgba(239, 68, 68, 0.3)',
+        borderRadius: 'var(--radius-xl)',
+        padding: '16px 20px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        flexWrap: 'wrap',
+        gap: '12px',
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div
+          style={{
+            width: '36px',
+            height: '36px',
+            borderRadius: 'var(--radius-md)',
+            background: 'rgba(239, 68, 68, 0.2)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+          }}
+        >
+          <Flame size={20} color="#EF4444" fill="#EF4444" />
+        </div>
+        <div>
+          <h4 style={{ fontSize: 'var(--text-sm)', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
+            {activeSession ? `Exam Tonight? Active Session: ${activeSession.subject}` : 'Exam Tonight?'}
+          </h4>
+          <p style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)', marginTop: '2px' }}>
+            {activeSession
+              ? `You have an active timed crash plan for ${activeSession.subject}. Continue revision now.`
+              : 'Don’t panic. Generate a high-yield timed crash plan for the hours you have left.'}
+          </p>
+        </div>
+      </div>
+
+      <Button
+        variant="primary"
+        size="sm"
+        rightIcon={ArrowRight}
+        onClick={() => {
+          if (activeSession) {
+            navigate(`/exam-rescue/session/${activeSession.id}`);
+          } else {
+            navigate('/exam-rescue');
+          }
+        }}
+        style={{
+          background: 'linear-gradient(135deg, #EF4444 0%, #F97316 100%)',
+          borderColor: '#EF4444',
+          flexShrink: 0,
+        }}
+      >
+        {activeSession ? `Continue ${activeSession.subject} Rescue` : 'Open Exam Rescue'}
+      </Button>
+    </div>
   );
 };

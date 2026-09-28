@@ -12,6 +12,9 @@ import { Dashboard } from './pages/Dashboard';
 import { RoadmapPage } from './pages/RoadmapPage';
 import { ProgressPage } from './pages/ProgressPage';
 import { ProfilePage } from './pages/ProfilePage';
+import { ExamRescueSetup } from './pages/ExamRescueSetup';
+import { ExamSessionTerminal } from './pages/ExamSessionTerminal';
+import { FinalRevisionSheet } from './pages/FinalRevisionSheet';
 import { NotFound } from './pages/NotFound';
 
 const queryClient = new QueryClient({
@@ -77,6 +80,32 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <ProfilePage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Exam Rescue Routes */}
+          <Route
+            path="/exam-rescue"
+            element={
+              <ProtectedRoute>
+                <ExamRescueSetup />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/exam-rescue/session/:sessionId"
+            element={
+              <ProtectedRoute>
+                <ExamSessionTerminal />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/exam-rescue/session/:sessionId/revision"
+            element={
+              <ProtectedRoute>
+                <FinalRevisionSheet />
               </ProtectedRoute>
             }
           />
