@@ -54,9 +54,19 @@ app = FastAPI(
 )
 
 # ---------- CORS ----------
+cors_origins = [str(origin) for origin in settings.BACKEND_CORS_ORIGINS] if settings.BACKEND_CORS_ORIGINS else []
+default_origins = [
+    "https://zelo-ai.vercel.app",
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "http://localhost:5174",
+]
+all_origins = list(set(cors_origins + default_origins))
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.BACKEND_CORS_ORIGINS,
+    allow_origins=all_origins,
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
