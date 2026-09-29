@@ -11,6 +11,8 @@ from app.api.v1.tasks import router as tasks_router
 from app.api.v1.gamification import router as gamification_router
 from app.api.v1.progress import router as progress_router
 from app.api.v1.exam_rescue import router as exam_rescue_router
+from app.api.v1.skill_path import router as skill_path_router
+from app.api.v1.insights import router as insights_router
 
 
 
@@ -69,6 +71,8 @@ app.include_router(tasks_router, prefix="/api/v1")
 app.include_router(gamification_router, prefix="/api/v1")
 app.include_router(progress_router, prefix="/api/v1")
 app.include_router(exam_rescue_router, prefix="/api/v1")
+app.include_router(skill_path_router, prefix="/api/v1")
+app.include_router(insights_router, prefix="/api/v1")
 
 # Later you will add:
 # app.include_router(auth_router, prefix="/api/v1")

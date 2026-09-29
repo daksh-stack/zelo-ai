@@ -8,16 +8,20 @@ import {
   Flame,
   LogOut,
   Shield,
+  Layers,
+  MessageSquare,
 } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { useAppStore } from '../../store/appStore';
 
 const NAV_ITEMS = [
-  { label: 'Missions',    sublabel: 'Today',       path: '/dashboard',   icon: LayoutDashboard },
-  { label: 'Exam Rescue', sublabel: 'Crash Coach', path: '/exam-rescue', icon: Flame, isRescue: true },
-  { label: 'Campaign',    sublabel: 'Roadmap',     path: '/roadmap',     icon: Map },
-  { label: 'Progress',    sublabel: 'Rank',        path: '/progress',    icon: TrendingUp },
-  { label: 'Profile',     sublabel: 'Settings',    path: '/profile',     icon: User },
+  { label: 'Missions',    sublabel: 'Today',       path: '/dashboard',               icon: LayoutDashboard },
+  { label: 'Revise',      sublabel: 'Flash Cards', path: '/skill-path/quick-revision', icon: Layers },
+  { label: 'Interview',   sublabel: 'Mock Room',   path: '/skill-path/interview-practice', icon: MessageSquare },
+  { label: 'Campaign',    sublabel: 'Roadmap',     path: '/roadmap',                 icon: Map },
+  { label: 'Exam Rescue', sublabel: 'Crash Coach', path: '/exam-rescue',             icon: Flame, isRescue: true },
+  { label: 'Progress',    sublabel: 'Rank',        path: '/progress',                icon: TrendingUp },
+  { label: 'Profile',     sublabel: 'Settings',    path: '/profile',                 icon: User },
 ];
 
 export const Sidebar = () => {

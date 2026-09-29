@@ -12,6 +12,9 @@ import {
   Target,
   Flame,
   ArrowRight,
+  Layers,
+  MessageSquare,
+  TrendingUp,
 } from 'lucide-react';
 import { AppShell } from '../components/layout/AppShell';
 import { Card } from '../components/ui/Card';
@@ -23,12 +26,15 @@ import { getProgressSummaryApi } from '../api/progress';
 import { getTodayTasksApi, completeTaskApi } from '../api/tasks';
 import { getCurrentRoadmapApi } from '../api/roadmaps';
 import { listExamSessions } from '../api/examRescue';
+import { getWeeklyReport } from '../api/insights';
 import { useAppStore } from '../store/appStore';
 import { TaskCard } from '../components/dashboard/TaskCard';
 import { StreakWidget } from '../components/dashboard/StreakWidget';
 import { XpWidget } from '../components/dashboard/XpWidget';
 import { RoadmapPhaseWidget } from '../components/dashboard/RoadmapPhaseWidget';
 import { CelebrationModal } from '../components/dashboard/CelebrationModal';
+import { SocraticProbeModal } from '../components/skill/SocraticProbeModal';
+import { MicroQuizModal } from '../components/tasks/MicroQuizModal';
 
 export const Dashboard = () => {
   const navigate = useNavigate();
@@ -37,6 +43,9 @@ export const Dashboard = () => {
 
   const [pendingTaskId, setPendingTaskId] = useState(null);
   const [showCelebration, setShowCelebration] = useState(false);
+  const [probeTask, setProbeTask] = useState(null);
+  const [quizTask, setQuizTask] = useState(null);
+  const [quizzedTaskIds, setQuizzedTaskIds] = useState(() => new Set());
 
   // Today's formatted date string
   const todayFormatted = new Date().toLocaleDateString('en-US', {
@@ -46,7 +55,7 @@ export const Dashboard = () => {
     year: 'numeric',
   });
 
-  // 1. Parallel Data Queries using TanStack Query
+  // 1. Data Queries
   const {
     data: summaryData,
     isLoading: isSummaryLoading,
@@ -77,13 +86,19 @@ export const Dashboard = () => {
     retry: false,
   });
 
+  const { data: weeklyReport } = useQuery({
+    queryKey: ['insights', 'weekly'],
+    queryFn: getWeeklyReport,
+    retry: false,
+  });
+
   useEffect(() => {
     if (summaryData) {
       setSummary(summaryData);
     }
   }, [summaryData, setSummary]);
 
-  // 2. Complete Task Mutation with Optimistic Updates
+  // 2. Complete Task Mutation
   const completeMutation = useMutation({
     mutationFn: ({ taskId, status }) => completeTaskApi(taskId, status),
     onMutate: async ({ taskId, status }) => {
@@ -112,12 +127,22 @@ export const Dashboard = () => {
         refetchTasks(),
       ]);
 
-      const tasksList = newTasksData?.data?.tasks || [];
+      const tasksList = newTasksData?.data?.tasks || tasksData?.tasks || [];
       const allCompleted =
         tasksList.length > 0 && tasksList.every((t) => t.status === 'done');
 
       if (variables.status === 'done') {
         showToast(`+${data.xp_value} XP Earned!`, 'success');
+
+        // Post-task micro-quiz trigger (if not quizzed yet in this session)
+        if (!quizzedTaskIds.has(variables.taskId)) {
+          const finishedTask = tasksList.find((t) => t.id === variables.taskId) || {
+            id: variables.taskId,
+            title: 'Completed Task',
+          };
+          setQuizzedTaskIds((prev) => new Set(prev).add(variables.taskId));
+          setQuizTask(finishedTask);
+        }
       }
 
       if (allCompleted) {
@@ -155,6 +180,7 @@ export const Dashboard = () => {
   };
 
   const isInitialLoading = isSummaryLoading || isTasksLoading;
+  const weeklyCompletionPct = Math.round((weeklyReport?.completion_rate || 0) * 100);
 
   return (
     <AppShell title="Missions Command">
@@ -218,8 +244,154 @@ export const Dashboard = () => {
           </div>
         </Card>
 
+        {/* Minimal Dashboard Teaser Card (Phase 3 Requirement) */}
+        {weeklyReport && (
+          <div
+            onClick={() => navigate('/progress')}
+            style={{
+              background: 'var(--bg-surface)',
+              border: '1px solid var(--accent-border)',
+              borderRadius: 'var(--radius-xl)',
+              padding: '12px 18px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '12px',
+              transition: 'all var(--t-fast)',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'var(--accent-dim)';
+              e.currentTarget.style.borderColor = 'var(--accent)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'var(--bg-surface)';
+              e.currentTarget.style.borderColor = 'var(--accent-border)';
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <TrendingUp size={18} color="var(--accent)" />
+              <span style={{ fontSize: 'var(--text-xs)', fontWeight: 700, color: 'var(--text-primary)' }}>
+                This week: <span style={{ color: 'var(--accent)' }}>{weeklyCompletionPct}% completion</span>
+              </span>
+              <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)' }}>
+                • {weeklyReport.days_planned ?? 0} planned days
+              </span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: 'var(--text-xs)', fontWeight: 700, color: 'var(--accent)' }}>
+              <span>View Report</span>
+              <ArrowRight size={14} />
+            </div>
+          </div>
+        )}
+
         {/* Exam Rescue Teaser Card */}
         <ExamRescueTeaserCard navigate={navigate} />
+
+        {/* Skill Path Quick Surfaces Cards */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+          {/* Quick Revision Card */}
+          <div
+            onClick={() => navigate('/skill-path/quick-revision')}
+            style={{
+              background: 'var(--bg-surface)',
+              border: '1px solid var(--accent-border)',
+              borderRadius: 'var(--radius-xl)',
+              padding: '16px 20px',
+              cursor: 'pointer',
+              transition: 'all var(--t-base)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '12px',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = 'var(--accent)';
+              e.currentTarget.style.background = 'var(--accent-dim)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = 'var(--accent-border)';
+              e.currentTarget.style.background = 'var(--bg-surface)';
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div
+                style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: 'var(--radius-md)',
+                  background: 'var(--accent-dim)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                }}
+              >
+                <Layers size={20} color="var(--accent)" />
+              </div>
+              <div>
+                <h4 style={{ fontSize: 'var(--text-sm)', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
+                  Quick Revision Decks
+                </h4>
+                <p style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)', marginTop: '2px' }}>
+                  Short flashcard recall. Weak areas prioritized.
+                </p>
+              </div>
+            </div>
+            <ArrowRight size={16} color="var(--accent)" style={{ flexShrink: 0 }} />
+          </div>
+
+          {/* Interview Practice Card */}
+          <div
+            onClick={() => navigate('/skill-path/interview-practice')}
+            style={{
+              background: 'var(--bg-surface)',
+              border: '1px solid rgba(167, 139, 250, 0.35)',
+              borderRadius: 'var(--radius-xl)',
+              padding: '16px 20px',
+              cursor: 'pointer',
+              transition: 'all var(--t-base)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '12px',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = '#A78BFA';
+              e.currentTarget.style.background = 'rgba(167, 139, 250, 0.12)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = 'rgba(167, 139, 250, 0.35)';
+              e.currentTarget.style.background = 'var(--bg-surface)';
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div
+                style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: 'var(--radius-md)',
+                  background: 'rgba(167, 139, 250, 0.15)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                }}
+              >
+                <MessageSquare size={20} color="#A78BFA" />
+              </div>
+              <div>
+                <h4 style={{ fontSize: 'var(--text-sm)', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
+                  AI Interview Practice
+                </h4>
+                <p style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)', marginTop: '2px' }}>
+                  Mock interview room with AI feedback & scoring.
+                </p>
+              </div>
+            </div>
+            <ArrowRight size={16} color="#A78BFA" style={{ flexShrink: 0 }} />
+          </div>
+        </div>
 
         {/* Main Grid Layout (70% Left / 30% Right) */}
         <div className="dashboard-grid">
@@ -289,6 +461,8 @@ export const Dashboard = () => {
                       key={task.id}
                       task={task}
                       onComplete={handleTaskComplete}
+                      onTestUnderstanding={(t) => setProbeTask(t)}
+                      onQuizTask={(t) => setQuizTask(t)}
                       isPendingAction={pendingTaskId === task.id}
                       isFirstPending={firstPendingTask?.id === task.id}
                     />
@@ -335,6 +509,21 @@ export const Dashboard = () => {
         onClose={() => setShowCelebration(false)}
         streakCount={summaryData?.streak?.current_streak || 1}
         xpEarned={sortedTasks.reduce((acc, t) => acc + (t.status === 'done' ? t.xp_value : 0), 0)}
+      />
+
+      <SocraticProbeModal
+        isOpen={!!probeTask}
+        onClose={() => setProbeTask(null)}
+        taskTitle={probeTask?.title}
+        taskDescription={probeTask?.description}
+      />
+
+      {/* Phase 3: Post-task micro-quiz modal */}
+      <MicroQuizModal
+        isOpen={!!quizTask}
+        onClose={() => setQuizTask(null)}
+        taskId={quizTask?.id}
+        taskTitle={quizTask?.title}
       />
 
       <style>{`

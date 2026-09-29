@@ -8,7 +8,9 @@ from app.models.roadmap import Roadmap
 from app.models.task import DailyPlan, Task
 from app.models.gamification import Streak, UserXP
 from app.models.exam_rescue import ExamSession, ExamTopicPlan
+from app.models.skill_path import InterviewSession, InterviewAnswer, QuickRevisionCard, InterviewSessionStatus, InterviewDomain
 from alembic import context
+from app.models.quiz import QuizAttempt
 
 # --------------------------------------------------
 # Import your project settings and Base

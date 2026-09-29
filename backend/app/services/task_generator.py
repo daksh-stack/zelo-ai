@@ -129,6 +129,7 @@ Would you like to write a FastAPI service layer method that hooks this function 
 """
 
 from typing import List, Dict
+from app.services.adaptation_service import recent_task_stats
 
 
 # High-quality free resources mapped by topic
@@ -207,85 +208,88 @@ def get_resource(topic: str, preferred_style: str = "video") -> Dict[str, str]:
     }
 
 
-def generate_daily_tasks(profile: dict, roadmap_phases: list, current_phase: int) -> List[Dict]:
+def generate_daily_tasks(
+    profile: dict,
+    roadmap_phases: list,
+    current_phase: int,
+    stats: dict | None = None,
+) -> list[dict]:
+    stats = stats or {}
     daily_hours = profile.get("daily_hours") or 2.5
     preferred_style = (profile.get("preferred_style") or "video").lower()
     weak_areas = [w.lower() for w in (profile.get("weak_areas") or [])]
-    skill_levels = profile.get("skill_levels") or {}
+    skip_rate = stats.get("skip_rate") or 0
+    completion = stats.get("completion_rate") or 0.5
 
-    # Decide number of tasks
-    if daily_hours <= 1.5:
+    # Adapt load
+    if skip_rate > 0.4 or daily_hours <= 1.5:
         num_tasks = 3
-    elif daily_hours <= 3:
-        num_tasks = 4
-    else:
+    elif completion > 0.8 and daily_hours >= 3:
         num_tasks = 5
+    else:
+        num_tasks = 4
 
     phase = roadmap_phases[current_phase] if current_phase < len(roadmap_phases) else roadmap_phases[-1]
-    focus_areas = phase.get("focus", ["DSA"])
-    main_topic = focus_areas[0] if focus_areas else "DSA"
+    focus_areas = phase.get("focus") or ["DSA"]
+    main_topic = focus_areas[0]
 
-    tasks = []
-    order = 1
+    # If they skip practice often, bias toward shorter learning + 1 practice
+    prefer_short_practice = skip_rate > 0.35
 
-    # 1. Main Learning Task
     resource = get_resource(main_topic, preferred_style)
-    tasks.append({
+    tasks = [{
         "title": f"Learn: {main_topic}",
-        "description": f"Complete focused study on {main_topic}. Take short notes of important points.",
+        "description": f"Focused study on {main_topic}. Write 5 bullets.",
         "resource_url": resource["url"],
-        "estimated_minutes": 30,
+        "estimated_minutes": 25 if prefer_short_practice else 30,
         "xp_value": 20,
-        "order": order
-    })
-    order += 1
-
-    # 2. Practice Easy
-    tasks.append({
-        "title": f"Practice Easy problems ({main_topic})",
-        "description": "Solve 2 easy problems related to today's topic. Focus on writing clean code.",
+        "order": 1,
+        "quiz_topic": main_topic,
+    }, {
+        "title": f"Practice Easy ({main_topic})",
+        "description": "Solve 2 easy problems. Clean code over speed.",
         "resource_url": "https://leetcode.com/problemset/?difficulty=EASY",
-        "estimated_minutes": 30,
+        "estimated_minutes": 25 if prefer_short_practice else 30,
         "xp_value": 20,
-        "order": order
-    })
-    order += 1
+        "order": 2,
+        "quiz_topic": main_topic,
+    }]
 
-    # 3. Practice Medium (if time allows)
-    if num_tasks >= 4:
+    if num_tasks >= 4 and not prefer_short_practice:
         tasks.append({
-            "title": f"Attempt 1 Medium problem",
-            "description": "Try one medium problem. Even if you can't solve it fully, understand the pattern.",
+            "title": "Attempt 1 Medium problem",
+            "description": "One medium. Capture the pattern even if unsolved.",
             "resource_url": "https://leetcode.com/problemset/?difficulty=MEDIUM",
             "estimated_minutes": 35,
             "xp_value": 25,
-            "order": order
+            "order": 3,
+            "quiz_topic": main_topic,
         })
-        order += 1
 
-    # 4. Weak Area Revision
-    if weak_areas and num_tasks >= 4:
-        weak = weak_areas[0]
-        weak_resource = get_resource(weak, preferred_style)
+    # Weak area / quiz misses get priority revision
+    extra_weak = (stats.get("weak_quiz_topics") or []) + weak_areas
+    if extra_weak and len(tasks) < num_tasks:
+        weak = extra_weak[0]
+        wr = get_resource(str(weak), preferred_style)
         tasks.append({
-            "title": f"Revise Weak Area: {weak.title()}",
-            "description": f"Spend focused time on {weak}. Revise concepts and solve 1 related problem.",
-            "resource_url": weak_resource["url"],
-            "estimated_minutes": 25,
+            "title": f"Revise weak area: {str(weak).title()}",
+            "description": f"Revisit {weak}. One problem + 5-point recap.",
+            "resource_url": wr["url"],
+            "estimated_minutes": 20,
             "xp_value": 20,
-            "order": order
+            "order": 4,
+            "quiz_topic": str(weak),
         })
-        order += 1
 
-    # 5. Daily Review
     if len(tasks) < num_tasks:
         tasks.append({
             "title": "Daily Review & Notes",
-            "description": "Review everything you studied today. Write 5 key takeaways and mark doubts.",
+            "description": "5 takeaways. Mark one doubt for tomorrow.",
             "resource_url": None,
             "estimated_minutes": 15,
             "xp_value": 10,
-            "order": order
+            "order": 5,
+            "quiz_topic": main_topic,
         })
 
     return tasks[:num_tasks]

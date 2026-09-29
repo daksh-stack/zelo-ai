@@ -15,6 +15,8 @@ import { ProfilePage } from './pages/ProfilePage';
 import { ExamRescueSetup } from './pages/ExamRescueSetup';
 import { ExamSessionTerminal } from './pages/ExamSessionTerminal';
 import { FinalRevisionSheet } from './pages/FinalRevisionSheet';
+import { QuickRevisionPage } from './pages/QuickRevisionPage';
+import { InterviewPracticePage } from './pages/InterviewPracticePage';
 import { NotFound } from './pages/NotFound';
 
 const queryClient = new QueryClient({
@@ -80,6 +82,32 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <ProfilePage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Skill Path Surfaces Routes */}
+          <Route
+            path="/skill-path/quick-revision"
+            element={
+              <ProtectedRoute>
+                <QuickRevisionPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/skill-path/interview-practice"
+            element={
+              <ProtectedRoute>
+                <InterviewPracticePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/skill-path/interview-practice/:sessionId"
+            element={
+              <ProtectedRoute>
+                <InterviewPracticePage />
               </ProtectedRoute>
             }
           />

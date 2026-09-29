@@ -1,5 +1,5 @@
-import React from 'react';
-import { useQuery } from '@tanstack/react-query';
+import React, { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import {
   Flame,
@@ -9,16 +9,41 @@ import {
   CheckCircle2,
   ShieldCheck,
   Shield,
+  Calendar,
+  Sparkles,
+  ArrowRight,
+  HelpCircle,
+  AlertCircle,
+  Lightbulb,
 } from 'lucide-react';
 import { AppShell } from '../components/layout/AppShell';
 import { Card } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
+import { Button } from '../components/ui/Button';
 import { ProgressBar } from '../components/ui/ProgressBar';
 import { Skeleton } from '../components/ui/Spinner';
+import { showToast } from '../components/ui/Toast';
 import { getProgressSummaryApi } from '../api/progress';
 import { getProfileApi } from '../api/profile';
+import { getWeeklyReport, advanceRoadmapPhase } from '../api/insights';
 
 export const ProgressPage = () => {
+  const queryClient = useQueryClient();
+  const [isAdvancing, setIsAdvancing] = useState(false);
+
+  // 1. Weekly Report Query
+  const {
+    data: weeklyReport,
+    isLoading: isWeeklyLoading,
+    isError: isWeeklyError,
+    refetch: refetchWeekly,
+  } = useQuery({
+    queryKey: ['insights', 'weekly'],
+    queryFn: getWeeklyReport,
+    retry: false,
+  });
+
+  // 2. Existing Summary and Profile Queries
   const { data: summary, isLoading: isSummaryLoading } = useQuery({
     queryKey: ['progressSummary'],
     queryFn: getProgressSummaryApi,
@@ -27,6 +52,25 @@ export const ProgressPage = () => {
   const { data: profile, isLoading: isProfileLoading } = useQuery({
     queryKey: ['userProfile'],
     queryFn: getProfileApi,
+  });
+
+  // Advance Phase Mutation
+  const advanceMutation = useMutation({
+    mutationFn: advanceRoadmapPhase,
+    onMutate: () => setIsAdvancing(true),
+    onSuccess: (data) => {
+      const title = data?.phase_title || `Phase ${data?.current_phase + 1}`;
+      showToast(`Phase advanced successfully! Now on ${title}`, 'success');
+      queryClient.invalidateQueries({ queryKey: ['insights', 'weekly'] });
+      queryClient.invalidateQueries({ queryKey: ['currentRoadmap'] });
+      queryClient.invalidateQueries({ queryKey: ['todayTasks'] });
+      queryClient.invalidateQueries({ queryKey: ['progressSummary'] });
+    },
+    onError: (err) => {
+      const detail = err?.response?.data?.detail || err?.response?.data?.message || 'Unable to advance phase at this time.';
+      showToast(detail, 'error');
+    },
+    onSettled: () => setIsAdvancing(false),
   });
 
   const streak = summary?.streak || {};
@@ -53,19 +97,133 @@ export const ProgressPage = () => {
     return { day, active, isToday: idx === todayIdx };
   });
 
-  const isLoading = isSummaryLoading || isProfileLoading;
+  const isLoading = isSummaryLoading || isProfileLoading || isWeeklyLoading;
+
+  // Weekly stats values formatting
+  const daysPlanned = weeklyReport?.days_planned ?? 0;
+  const completionRatePct = Math.round((weeklyReport?.completion_rate || 0) * 100);
+  const skipRatePct = Math.round((weeklyReport?.skip_rate || 0) * 100);
+  const quizAccuracyStr =
+    weeklyReport?.quiz_accuracy !== null && weeklyReport?.quiz_accuracy !== undefined
+      ? `${Math.round(weeklyReport.quiz_accuracy * 100)}%`
+      : '—';
+  const currentPhaseNum = (weeklyReport?.current_phase ?? 0) + 1;
+  const recommendations = weeklyReport?.recommendations || [];
 
   return (
-    <AppShell title="Progress & Rank Analytics">
+    <AppShell title="Progress & Adaptive Insights">
       <div style={{ maxWidth: '960px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '28px' }}>
-        {/* Quote Banner */}
+        
+        {/* Phase 3: Weekly Report Card (Skill Path Cyan/Grok-style) */}
         <Card padding="24px" glow glowColor="accent" accent>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            {/* Header row */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                  <Calendar size={16} color="var(--accent)" />
+                  <Badge variant="cyan">LAST 7 DAYS</Badge>
+                  <Badge variant="muted">Phase {currentPhaseNum}</Badge>
+                </div>
+                <h2 style={{ fontSize: 'var(--text-xl)', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.02em', margin: 0 }}>
+                  {weeklyReport?.roadmap_title || 'Skill Path Performance Report'}
+                </h2>
+                <p style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)', marginTop: '4px' }}>
+                  Adaptive workload analysis & skill retention metrics
+                </p>
+              </div>
+
+              {/* Advance Phase CTA on Weekly Card */}
+              <div>
+                {weeklyReport?.can_advance_phase ? (
+                  <Button
+                    variant="primary"
+                    size="md"
+                    rightIcon={ArrowRight}
+                    isLoading={isAdvancing}
+                    onClick={() => advanceMutation.mutate()}
+                  >
+                    Advance to Next Phase
+                  </Button>
+                ) : (
+                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)', background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '8px 12px', maxWidth: '280px' }}>
+                    Keep a 5-day streak of finishing most tasks to unlock the next phase.
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* 4 Stat Metrics Grid */}
+            {isWeeklyLoading ? (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '12px' }}>
+                <Skeleton height="70px" borderRadius="12px" />
+                <Skeleton height="70px" borderRadius="12px" />
+                <Skeleton height="70px" borderRadius="12px" />
+                <Skeleton height="70px" borderRadius="12px" />
+              </div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '12px' }}>
+                {/* Metric 1 */}
+                <div style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '14px' }}>
+                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)', fontWeight: 600 }}>Planned Days</div>
+                  <div style={{ fontSize: 'var(--text-xl)', fontWeight: 800, color: 'var(--text-primary)', marginTop: '2px' }}>
+                    {daysPlanned} <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)', fontWeight: 500 }}>/ 7 days</span>
+                  </div>
+                </div>
+
+                {/* Metric 2 */}
+                <div style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '14px' }}>
+                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)', fontWeight: 600 }}>Completion</div>
+                  <div style={{ fontSize: 'var(--text-xl)', fontWeight: 800, color: 'var(--accent)', marginTop: '2px' }}>
+                    {completionRatePct}%
+                  </div>
+                </div>
+
+                {/* Metric 3 */}
+                <div style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '14px' }}>
+                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)', fontWeight: 600 }}>Skip Rate</div>
+                  <div style={{ fontSize: 'var(--text-xl)', fontWeight: 800, color: skipRatePct > 20 ? 'var(--text-danger)' : 'var(--text-secondary)', marginTop: '2px' }}>
+                    {skipRatePct}%
+                  </div>
+                </div>
+
+                {/* Metric 4 */}
+                <div style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '14px' }}>
+                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)', fontWeight: 600 }}>Quiz Accuracy</div>
+                  <div style={{ fontSize: 'var(--text-xl)', fontWeight: 800, color: 'var(--xp)', marginTop: '2px' }}>
+                    {quizAccuracyStr}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Recommendations Bullets */}
+            {recommendations.length > 0 && (
+              <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '14px 16px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: 'var(--text-xs)', fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', marginBottom: '8px' }}>
+                  <Lightbulb size={14} />
+                  Adaptive Recommendations
+                </div>
+                <ul style={{ margin: 0, paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  {recommendations.map((rec, i) => (
+                    <li key={i} style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                      {rec}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        </Card>
+
+        {/* Existing Rank Banner */}
+        <Card padding="20px" accent>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
               <div
                 style={{
-                  width: '42px',
-                  height: '42px',
+                  width: '40px',
+                  height: '40px',
                   borderRadius: 'var(--radius-lg)',
                   background: 'var(--accent)',
                   display: 'flex',
@@ -74,12 +232,12 @@ export const ProgressPage = () => {
                   boxShadow: '0 0 16px var(--accent-glow)',
                 }}
               >
-                <Shield size={22} color="#0C0E11" strokeWidth={2.5} />
+                <Shield size={20} color="#0C0E11" strokeWidth={2.5} />
               </div>
               <div>
-                <h2 style={{ fontSize: 'var(--text-lg)', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.02em', margin: 0 }}>
+                <h3 style={{ fontSize: 'var(--text-md)', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
                   "Relentless consistency beats talent."
-                </h2>
+                </h3>
                 <p style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)', marginTop: '2px' }}>
                   Execute daily missions to level up your engineering rank.
                 </p>
@@ -209,15 +367,14 @@ export const ProgressPage = () => {
                       background: d.active
                         ? 'var(--accent-dim)'
                         : d.isToday
-                        ? 'var(--bg-elevated)'
-                        : 'var(--bg-base)',
-                      border: `1px solid ${
-                        d.active
+                          ? 'var(--bg-elevated)'
+                          : 'var(--bg-base)',
+                      border: `1px solid ${d.active
                           ? 'var(--accent-border)'
                           : d.isToday
-                          ? 'var(--accent)'
-                          : 'var(--border)'
-                      }`,
+                            ? 'var(--accent)'
+                            : 'var(--border)'
+                        }`,
                       borderRadius: 'var(--radius-lg)',
                       padding: '12px 6px',
                       textAlign: 'center',

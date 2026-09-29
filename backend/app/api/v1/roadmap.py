@@ -80,6 +80,18 @@ async def get_current_roadmap(
     return roadmap
 
 
+@router.get("/templates")
+async def list_templates():
+    return {
+        "templates": [
+            {"id": "sde", "label": "SDE / Backend"},
+            {"id": "frontend", "label": "Frontend"},
+            {"id": "data", "label": "Data / ML"},
+            {"id": "devops", "label": "DevOps / Cloud"},
+            {"id": "core", "label": "Core ECE/EEE"},
+        ]
+    }
+
 
 
 

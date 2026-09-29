@@ -10,15 +10,17 @@ import {
   Circle,
   AlertCircle,
   SkipForward,
+  Lightbulb,
+  HelpCircle,
 } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 
-export const TaskCard = ({ task, onComplete, isPendingAction = false, isFirstPending = false }) => {
+export const TaskCard = ({ task, onComplete, onTestUnderstanding, onQuizTask, isPendingAction = false, isFirstPending = false }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [showXpFlash, setShowXpFlash] = useState(false);
 
-  const isDone    = task.status === 'done';
+  const isDone = task.status === 'done';
   const isPartial = task.status === 'partial';
   const isSkipped = task.status === 'skipped';
 
@@ -34,14 +36,14 @@ export const TaskCard = ({ task, onComplete, isPendingAction = false, isFirstPen
   const borderColor = isFirstPending
     ? 'var(--accent)'
     : isDone
-    ? 'var(--success-border)'
-    : 'var(--border)';
+      ? 'var(--success-border)'
+      : 'var(--border)';
 
   const bgColor = isDone
     ? 'rgba(34,197,94,0.03)'
     : isSkipped
-    ? 'var(--bg-base)'
-    : 'var(--bg-surface)';
+      ? 'var(--bg-base)'
+      : 'var(--bg-surface)';
 
   return (
     <motion.div
@@ -194,6 +196,31 @@ export const TaskCard = ({ task, onComplete, isPendingAction = false, isFirstPen
                   <ExternalLink size={11} />
                 </a>
               )}
+              {isDone && onQuizTask && (
+                <button
+                  onClick={() => onQuizTask(task)}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    padding: '3px 8px',
+                    borderRadius: 'var(--radius-md)',
+                    fontSize: 'var(--text-xs)',
+                    fontWeight: 600,
+                    color: 'var(--accent)',
+                    background: 'var(--accent-dim)',
+                    border: '1px solid var(--accent-border)',
+                    cursor: 'pointer',
+                    transition: 'background var(--t-fast)',
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(56,189,248,0.2)'}
+                  onMouseLeave={(e) => e.currentTarget.style.background = 'var(--accent-dim)'}
+                  title="Take optional post-task retention question"
+                >
+                  <HelpCircle size={11} />
+                  <span>Quick check (optional)</span>
+                </button>
+              )}
             </div>
           </div>
 
@@ -261,6 +288,16 @@ export const TaskCard = ({ task, onComplete, isPendingAction = false, isFirstPen
               >
                 Partial
               </Button>
+              {onTestUnderstanding && (
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  leftIcon={Lightbulb}
+                  onClick={() => onTestUnderstanding(task)}
+                >
+                  Test understanding
+                </Button>
+              )}
               <Button
                 size="sm"
                 variant="ghost"

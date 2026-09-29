@@ -11,6 +11,8 @@ from app.models.roadmap import Roadmap
 from app.models.task import DailyPlan, Task, TaskStatus
 from app.schemas.task import DailyTasksResponse, TaskResponse, CompleteTaskRequest
 from app.services.task_generator import generate_daily_tasks
+from app.services.adaptation_service import recent_task_stats
+from app.services.task_generator import generate_daily_tasks
 
 router = APIRouter(prefix="/tasks", tags=["Daily Tasks"])
 
@@ -60,7 +62,14 @@ async def get_today_tasks(
         "preferred_style": profile.preferred_style
     }
 
-    generated = generate_daily_tasks(profile_data, roadmap.phases, roadmap.current_phase)
+    stats = await recent_task_stats(db, current_user.id)
+
+    generated = generate_daily_tasks(
+    profile_data,
+    roadmap.phases,
+    roadmap.current_phase,
+    stats=stats,
+    )
 
     # Create plan + tasks
     plan = DailyPlan(user_id=current_user.id, date=today)

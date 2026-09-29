@@ -64,22 +64,137 @@ def generate_sde_roadmap(profile: dict) -> List[Dict[str, Any]]:
     return phases
 
 
+
+def _phases(items: list[dict]) -> list[dict]:
+    return items
+
+
+
+
+
+def generate_frontend_roadmap(profile: dict) -> List[Dict[str, Any]]:
+    return _phases([
+        {"phase": 1, "title": "HTML/CSS/JS Foundations", "duration_weeks": 3,
+         "focus": ["HTML", "CSS", "JavaScript"],
+         "goals": ["Semantic HTML", "Flex/Grid layouts", "DOM + fetch"]},
+        {"phase": 2, "title": "React Core", "duration_weeks": 4,
+         "focus": ["React", "Hooks", "Routing"],
+         "goals": ["Build 2 small apps", "Lists/forms/state", "React Router"]},
+        {"phase": 3, "title": "Frontend Systems", "duration_weeks": 4,
+         "focus": ["TypeScript", "API integration", "Performance"],
+         "goals": ["TS basics", "Auth-aware UI", "Lighthouse pass"]},
+        {"phase": 4, "title": "Interview + Portfolio", "duration_weeks": 3,
+         "focus": ["JS interview", "System UI", "Projects"],
+         "goals": ["3 polished projects", "JS puzzles daily", "Deploy live"]},
+    ])
+
+
+def generate_data_roadmap(profile: dict) -> List[Dict[str, Any]]:
+    return _phases([
+        {"phase": 1, "title": "Python + SQL", "duration_weeks": 3,
+         "focus": ["Python", "SQL", "Pandas"],
+         "goals": ["SQL joins/windows", "Pandas EDA", "Clean a dataset"]},
+        {"phase": 2, "title": "Stats + ML Basics", "duration_weeks": 4,
+         "focus": ["Statistics", "ML", "sklearn"],
+         "goals": ["Bias/variance", "3 classic models", "Metrics literacy"]},
+        {"phase": 3, "title": "Projects + Viz", "duration_weeks": 4,
+         "focus": ["EDA", "Visualization", "Storytelling"],
+         "goals": ["2 end-to-end projects", "Clear notebooks", "GitHub README"]},
+        {"phase": 4, "title": "Interview Prep", "duration_weeks": 3,
+         "focus": ["SQL interview", "ML oral", "Case questions"],
+         "goals": ["Daily SQL", "Explain 5 models", "1 case study"]},
+    ])
+
+
+def generate_devops_roadmap(profile: dict) -> List[Dict[str, Any]]:
+    return _phases([
+        {"phase": 1, "title": "Linux + Git + Networking", "duration_weeks": 3,
+         "focus": ["Linux", "Git", "Networking"],
+         "goals": ["Shell fluency", "SSH/systemd basics", "Git workflows"]},
+        {"phase": 2, "title": "Containers + CI", "duration_weeks": 4,
+         "focus": ["Docker", "CI/CD", "Nginx"],
+         "goals": ["Dockerize an API", "GitHub Actions", "Reverse proxy"]},
+        {"phase": 3, "title": "Cloud + IaC", "duration_weeks": 4,
+         "focus": ["AWS basics", "Terraform", "Observability"],
+         "goals": ["Deploy on one cloud", "Simple Terraform", "Logs/metrics"]},
+        {"phase": 4, "title": "K8s + Interview", "duration_weeks": 3,
+         "focus": ["Kubernetes", "SRE basics", "Troubleshooting"],
+         "goals": ["Pod/service/ingress", "Incident stories", "Mock interviews"]},
+    ])
+
+
+def generate_core_roadmap(profile: dict) -> List[Dict[str, Any]]:
+    return _phases([
+        {"phase": 1, "title": "Core GATE/Exam Foundations", "duration_weeks": 3,
+         "focus": ["Networks", "Signals", "Digital"],
+         "goals": ["Formula sheets", "PYQ pattern list", "Daily 10 problems"]},
+        {"phase": 2, "title": "Heavy Subjects", "duration_weeks": 4,
+         "focus": ["Control systems", "EMF", "Machines"],
+         "goals": ["Standard numericals", "Weak-unit rescue", "Weekly mock"]},
+        {"phase": 3, "title": "Projects + Applied", "duration_weeks": 4,
+         "focus": ["Embedded/core project", "MATLAB/Simulink", "Docs"],
+         "goals": ["1 solid core project", "Demo video", "Viva notes"]},
+        {"phase": 4, "title": "Placement Core Interviews", "duration_weeks": 3,
+         "focus": ["Core oral", "Aptitude", "Resume"],
+         "goals": ["Subject oral bank", "HR stories", "Company-specific PYQ"]},
+    ])
+
+
+def generate_sde_roadmap(profile: dict) -> List[Dict[str, Any]]:
+    daily_hours = profile.get("daily_hours") or 2
+    weak_areas = [w.lower() for w in (profile.get("weak_areas") or [])]
+    phases = [
+        {"phase": 1, "title": "Foundation Strengthening", "duration_weeks": 3,
+         "focus": ["DSA Basics", "Problem Solving"],
+         "goals": ["Arrays/strings/hashing", "40–50 easy", "Complexity"]},
+        {"phase": 2, "title": "Core DSA + Patterns", "duration_weeks": 4,
+         "focus": ["Trees", "Graphs", "DP Intro"],
+         "goals": ["Trees + BS", "60+ medium", "Patterns"]},
+        {"phase": 3, "title": "System Design + Projects", "duration_weeks": 4,
+         "focus": ["System Design Basics", "Backend Project"],
+         "goals": ["HLD/LLD basics", "1 solid project", "Docs"]},
+        {"phase": 4, "title": "Interview Preparation", "duration_weeks": 3,
+         "focus": ["Mocks", "Revision", "Behavioral"],
+         "goals": ["Weak-topic revision", "Mixed sets", "SD questions"]},
+    ]
+    if any("system" in w for w in weak_areas):
+        phases[2]["duration_weeks"] += 1
+    if daily_hours < 2:
+        for p in phases:
+            p["duration_weeks"] = max(2, p["duration_weeks"] - 1)
+    return phases
+
+
 def generate_roadmap_for_user(profile_data: dict, target_role: str) -> dict:
-    target_role = target_role.lower()
-
-    if "sde" in target_role or "software" in target_role or "backend" in target_role:
-        phases = generate_sde_roadmap(profile_data)
-        title = f"SDE Roadmap – {target_role.title()}"
+    r = (target_role or "sde").lower()
+    if any(k in r for k in ["frontend", "front-end", "react"]):
+        phases, title = generate_frontend_roadmap(profile_data), f"Frontend Roadmap – {target_role}"
+    elif any(k in r for k in ["data", "ml", "analyst"]):
+        phases, title = generate_data_roadmap(profile_data), f"Data Roadmap – {target_role}"
+    elif any(k in r for k in ["devops", "sre", "cloud"]):
+        phases, title = generate_devops_roadmap(profile_data), f"DevOps Roadmap – {target_role}"
+    elif any(k in r for k in ["core", "ece", "eee", "electrical"]):
+        phases, title = generate_core_roadmap(profile_data), f"Core Roadmap – {target_role}"
     else:
-        # fallback
-        phases = generate_sde_roadmap(profile_data)
-        title = f"Career Roadmap – {target_role.title()}"
+        phases, title = generate_sde_roadmap(profile_data), f"SDE Roadmap – {target_role}"
+    return {"title": title, "target_role": target_role, "phases": phases}
 
-    return {
-        "title": title,
-        "target_role": target_role,
-        "phases": phases
-    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -111,3 +226,22 @@ This function serves as the main entry point that the rest of your app interacts
 
 
 """
+
+
+
+# def generate_roadmap_for_user(profile_data: dict, target_role: str) -> dict:
+#     target_role = target_role.lower()
+
+#     if "sde" in target_role or "software" in target_role or "backend" in target_role:
+#         phases = generate_sde_roadmap(profile_data)
+#         title = f"SDE Roadmap – {target_role.title()}"
+#     else:
+#         # fallback
+#         phases = generate_sde_roadmap(profile_data)
+#         title = f"Career Roadmap – {target_role.title()}"
+
+#     return {
+#         "title": title,
+#         "target_role": target_role,
+#         "phases": phases
+#     }
