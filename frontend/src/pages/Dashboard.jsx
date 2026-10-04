@@ -35,6 +35,8 @@ import { RoadmapPhaseWidget } from '../components/dashboard/RoadmapPhaseWidget';
 import { CelebrationModal } from '../components/dashboard/CelebrationModal';
 import { SocraticProbeModal } from '../components/skill/SocraticProbeModal';
 import { MicroQuizModal } from '../components/tasks/MicroQuizModal';
+import { FocusTimer } from '../components/habits/FocusTimer';
+import { ChallengeList } from '../components/habits/ChallengeList';
 
 export const Dashboard = () => {
   const navigate = useNavigate();
@@ -126,6 +128,9 @@ export const Dashboard = () => {
         refetchSummary(),
         refetchTasks(),
       ]);
+
+      queryClient.invalidateQueries({ queryKey: ['habits', 'challenges'] });
+      queryClient.invalidateQueries({ queryKey: ['habits', 'badges'] });
 
       const tasksList = newTasksData?.data?.tasks || tasksData?.tasks || [];
       const allCompleted =
@@ -244,7 +249,7 @@ export const Dashboard = () => {
           </div>
         </Card>
 
-        {/* Minimal Dashboard Teaser Card (Phase 3 Requirement) */}
+        {/* Minimal Dashboard Teaser Card */}
         {weeklyReport && (
           <div
             onClick={() => navigate('/progress')}
@@ -284,6 +289,9 @@ export const Dashboard = () => {
             </div>
           </div>
         )}
+
+        {/* Focus Mode Timer Bar / Card */}
+        <FocusTimer />
 
         {/* Exam Rescue Teaser Card */}
         <ExamRescueTeaserCard navigate={navigate} />
@@ -499,6 +507,7 @@ export const Dashboard = () => {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <StreakWidget streak={summaryData?.streak} />
             <XpWidget xpData={summaryData?.xp} />
+            <ChallengeList compact={true} />
             <RoadmapPhaseWidget roadmap={roadmapData} />
           </div>
         </div>
@@ -518,7 +527,7 @@ export const Dashboard = () => {
         taskDescription={probeTask?.description}
       />
 
-      {/* Phase 3: Post-task micro-quiz modal */}
+      {/* Post-task micro-quiz modal */}
       <MicroQuizModal
         isOpen={!!quizTask}
         onClose={() => setQuizTask(null)}

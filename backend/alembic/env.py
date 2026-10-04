@@ -11,6 +11,8 @@ from app.models.exam_rescue import ExamSession, ExamTopicPlan
 from app.models.skill_path import InterviewSession, InterviewAnswer, QuickRevisionCard, InterviewSessionStatus, InterviewDomain
 from alembic import context
 from app.models.quiz import QuizAttempt
+from app.models.habits import StreakFreezeLog, Challenge, UserBadge, FocusSession
+from app.models.social import Friendship, Circle, CircleMember, FriendStatus
 
 # --------------------------------------------------
 # Import your project settings and Base

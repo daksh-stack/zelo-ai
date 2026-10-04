@@ -13,6 +13,7 @@ from app.schemas.task import DailyTasksResponse, TaskResponse, CompleteTaskReque
 from app.services.task_generator import generate_daily_tasks
 from app.services.adaptation_service import recent_task_stats
 from app.services.task_generator import generate_daily_tasks
+from app.services.habit_service import sync_challenge_progress, grant_badges
 
 router = APIRouter(prefix="/tasks", tags=["Daily Tasks"])
 
@@ -131,6 +132,11 @@ async def complete_task(
 
     await db.commit()
     await db.refresh(task)
+
+    # Phase 4: update daily/weekly challenges + badges
+    await sync_challenge_progress(db, current_user.id)
+    await grant_badges(db, current_user.id)
+
     return task
 
 

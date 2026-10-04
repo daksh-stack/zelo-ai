@@ -10,12 +10,14 @@ import {
   Shield,
   Layers,
   MessageSquare,
+  Users,
 } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { useAppStore } from '../../store/appStore';
 
 const NAV_ITEMS = [
   { label: 'Missions',    sublabel: 'Today',       path: '/dashboard',               icon: LayoutDashboard },
+  { label: 'Squad',       sublabel: 'Leaderboard', path: '/squad',                   icon: Users },
   { label: 'Revise',      sublabel: 'Flash Cards', path: '/skill-path/quick-revision', icon: Layers },
   { label: 'Interview',   sublabel: 'Mock Room',   path: '/skill-path/interview-practice', icon: MessageSquare },
   { label: 'Campaign',    sublabel: 'Roadmap',     path: '/roadmap',                 icon: Map },

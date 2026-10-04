@@ -1,11 +1,13 @@
 import React from 'react';
 import { Flame, Award, ShieldCheck } from 'lucide-react';
 import { Card } from '../ui/Card';
+import { FreezeButton } from '../habits/FreezeButton';
 
 export const StreakWidget = ({ streak }) => {
   const current = streak?.current_streak ?? 0;
   const longest = streak?.longest_streak ?? 0;
   const freezes = streak?.freezes_remaining ?? 1;
+  const lastActiveDate = streak?.last_active_date;
   const isOnFire = current >= 3;
 
   return (
@@ -31,7 +33,7 @@ export const StreakWidget = ({ streak }) => {
             fill={isOnFire ? 'var(--streak)' : 'none'}
           />
         </div>
-        <div>
+        <div style={{ flex: 1 }}>
           <div style={{
             fontSize: 'var(--text-xl)',
             fontWeight: 800,
@@ -53,6 +55,7 @@ export const StreakWidget = ({ streak }) => {
           display: 'grid',
           gridTemplateColumns: '1fr 1fr',
           gap: '8px',
+          marginBottom: '12px',
         }}
       >
         <div style={{
@@ -84,6 +87,11 @@ export const StreakWidget = ({ streak }) => {
             {freezes}
           </div>
         </div>
+      </div>
+
+      {/* Freeze Action Button */}
+      <div style={{ display: 'flex', justifyContent: 'center' }}>
+        <FreezeButton freezesRemaining={freezes} currentStreak={current} size="sm" />
       </div>
     </Card>
   );

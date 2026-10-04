@@ -17,6 +17,7 @@ import { ExamSessionTerminal } from './pages/ExamSessionTerminal';
 import { FinalRevisionSheet } from './pages/FinalRevisionSheet';
 import { QuickRevisionPage } from './pages/QuickRevisionPage';
 import { InterviewPracticePage } from './pages/InterviewPracticePage';
+import { SquadPage } from './pages/SquadPage';
 import { NotFound } from './pages/NotFound';
 
 const queryClient = new QueryClient({
@@ -108,6 +109,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <InterviewPracticePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/squad"
+            element={
+              <ProtectedRoute>
+                <SquadPage />
               </ProtectedRoute>
             }
           />

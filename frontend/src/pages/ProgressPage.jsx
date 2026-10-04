@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   Flame,
@@ -15,6 +16,7 @@ import {
   HelpCircle,
   AlertCircle,
   Lightbulb,
+  Users,
 } from 'lucide-react';
 import { AppShell } from '../components/layout/AppShell';
 import { Card } from '../components/ui/Card';
@@ -26,8 +28,12 @@ import { showToast } from '../components/ui/Toast';
 import { getProgressSummaryApi } from '../api/progress';
 import { getProfileApi } from '../api/profile';
 import { getWeeklyReport, advanceRoadmapPhase } from '../api/insights';
+import { FreezeButton } from '../components/habits/FreezeButton';
+import { ChallengeList } from '../components/habits/ChallengeList';
+import { BadgeShelf } from '../components/habits/BadgeShelf';
 
 export const ProgressPage = () => {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [isAdvancing, setIsAdvancing] = useState(false);
 
@@ -35,7 +41,6 @@ export const ProgressPage = () => {
   const {
     data: weeklyReport,
     isLoading: isWeeklyLoading,
-    isError: isWeeklyError,
     refetch: refetchWeekly,
   } = useQuery({
     queryKey: ['insights', 'weekly'],
@@ -43,7 +48,7 @@ export const ProgressPage = () => {
     retry: false,
   });
 
-  // 2. Existing Summary and Profile Queries
+  // 2. Summary and Profile Queries
   const { data: summary, isLoading: isSummaryLoading } = useQuery({
     queryKey: ['progressSummary'],
     queryFn: getProgressSummaryApi,
@@ -82,6 +87,7 @@ export const ProgressPage = () => {
   const totalXp = xp.total_xp || 0;
   const level = Math.floor(totalXp / 100) + 1;
   const xpInCurrentLevel = totalXp % 100;
+  const freezes = streak.freezes_remaining ?? 1;
 
   // 7-day consistency strip
   const daysOfWeek = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -114,7 +120,7 @@ export const ProgressPage = () => {
     <AppShell title="Progress & Adaptive Insights">
       <div style={{ maxWidth: '960px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '28px' }}>
         
-        {/* Phase 3: Weekly Report Card (Skill Path Cyan/Grok-style) */}
+        {/* Weekly Report Card */}
         <Card padding="24px" glow glowColor="accent" accent>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             {/* Header row */}
@@ -133,7 +139,7 @@ export const ProgressPage = () => {
                 </p>
               </div>
 
-              {/* Advance Phase CTA on Weekly Card */}
+              {/* Advance Phase CTA */}
               <div>
                 {weeklyReport?.can_advance_phase ? (
                   <Button
@@ -216,39 +222,48 @@ export const ProgressPage = () => {
           </div>
         </Card>
 
-        {/* Existing Rank Banner */}
-        <Card padding="20px" accent>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-              <div
-                style={{
-                  width: '40px',
-                  height: '40px',
-                  borderRadius: 'var(--radius-lg)',
-                  background: 'var(--accent)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  boxShadow: '0 0 16px var(--accent-glow)',
-                }}
-              >
-                <Shield size={20} color="#0C0E11" strokeWidth={2.5} />
-              </div>
-              <div>
-                <h3 style={{ fontSize: 'var(--text-md)', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
-                  "Relentless consistency beats talent."
-                </h3>
-                <p style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)', marginTop: '2px' }}>
-                  Execute daily missions to level up your engineering rank.
-                </p>
-              </div>
+        {/* Phase 5: Squad Board Teaser Card */}
+        <div
+          onClick={() => navigate('/squad')}
+          style={{
+            background: 'var(--bg-surface)',
+            border: '1px solid var(--accent-border)',
+            borderRadius: 'var(--radius-xl)',
+            padding: '16px 20px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '12px',
+            transition: 'all var(--t-fast)',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'var(--accent-dim)';
+            e.currentTarget.style.borderColor = 'var(--accent)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'var(--bg-surface)';
+            e.currentTarget.style.borderColor = 'var(--accent-border)';
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ width: '36px', height: '36px', borderRadius: 'var(--radius-md)', background: 'var(--accent-dim)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Users size={20} color="var(--accent)" />
             </div>
-
-            <Badge variant="cyan" icon={TrendingUp}>
-              Live Metrics
-            </Badge>
+            <div>
+              <h4 style={{ fontSize: 'var(--text-sm)', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
+                Squad & Leaderboards
+              </h4>
+              <p style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)', marginTop: '2px' }}>
+                Compare ranks across your friends, study circles, and campus college board.
+              </p>
+            </div>
           </div>
-        </Card>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: 'var(--text-xs)', fontWeight: 700, color: 'var(--accent)' }}>
+            <span>Open Squad</span>
+            <ArrowRight size={14} />
+          </div>
+        </div>
 
         {isLoading ? (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '20px' }}>
@@ -260,33 +275,39 @@ export const ProgressPage = () => {
           <>
             {/* Top 3 Stat Cards */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '18px' }}>
-              {/* Streak Card */}
-              <Card padding="20px" glow glowColor="streak" accent>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-                  <div
-                    style={{
-                      width: '40px',
-                      height: '40px',
-                      borderRadius: 'var(--radius-lg)',
-                      background: 'var(--streak-dim)',
-                      border: '1px solid var(--streak-border)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <Flame size={22} color="var(--streak)" fill="var(--streak)" />
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 'var(--text-xl)', fontWeight: 800, color: 'var(--streak)' }}>
-                      {currentStreak} Days
+              {/* Streak Card with Freeze Button */}
+              <Card padding="20px" glow glowColor="streak" accent style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+                    <div
+                      style={{
+                        width: '40px',
+                        height: '40px',
+                        borderRadius: 'var(--radius-lg)',
+                        background: 'var(--streak-dim)',
+                        border: '1px solid var(--streak-border)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <Flame size={22} color="var(--streak)" fill="var(--streak)" />
                     </div>
-                    <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)' }}>Current Active Streak</div>
+                    <div>
+                      <div style={{ fontSize: 'var(--text-xl)', fontWeight: 800, color: 'var(--streak)' }}>
+                        {currentStreak} Days
+                      </div>
+                      <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)' }}>Current Active Streak</div>
+                    </div>
+                  </div>
+                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)', display: 'flex', justifyContent: 'space-between', borderTop: '1px solid var(--border)', paddingTop: '10px', marginBottom: '12px' }}>
+                    <span>Longest Streak:</span>
+                    <span style={{ color: 'var(--streak)', fontWeight: 700 }}>{longestStreak} Days</span>
                   </div>
                 </div>
-                <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)', display: 'flex', justifyContent: 'space-between', borderTop: '1px solid var(--border)', paddingTop: '10px' }}>
-                  <span>Longest Streak:</span>
-                  <span style={{ color: 'var(--streak)', fontWeight: 700 }}>{longestStreak} Days</span>
+
+                <div style={{ display: 'flex', justifyContent: 'center' }}>
+                  <FreezeButton freezesRemaining={freezes} currentStreak={currentStreak} size="sm" />
                 </div>
               </Card>
 
@@ -323,7 +344,7 @@ export const ProgressPage = () => {
                 </div>
               </Card>
 
-              {/* Freezes & Protection */}
+              {/* Freezes & Protection Card */}
               <Card padding="20px" accent>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
                   <div
@@ -342,7 +363,7 @@ export const ProgressPage = () => {
                   </div>
                   <div>
                     <div style={{ fontSize: 'var(--text-xl)', fontWeight: 800, color: 'var(--accent)' }}>
-                      {streak.freezes_remaining ?? 1} Freezes
+                      {freezes} Freezes
                     </div>
                     <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)' }}>Streak Protection Shields</div>
                   </div>
@@ -394,6 +415,12 @@ export const ProgressPage = () => {
                 ))}
               </div>
             </Card>
+
+            {/* Phase 4: Campaign Challenges Section */}
+            <ChallengeList compact={false} />
+
+            {/* Phase 4: Warrior Badge Shelf */}
+            <BadgeShelf compact={false} />
           </>
         )}
       </div>

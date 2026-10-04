@@ -24,6 +24,9 @@ import { getProfileApi, updateProfileApi } from '../api/profile';
 import { getProgressSummaryApi } from '../api/progress';
 import { getMeApi } from '../api/auth';
 import { useAuthStore } from '../store/authStore';
+import { FreezeButton } from '../components/habits/FreezeButton';
+import { BadgeShelf } from '../components/habits/BadgeShelf';
+import { SocialIdentityForm } from '../components/social/SocialIdentityForm';
 
 export const ProfilePage = () => {
   const navigate = useNavigate();
@@ -162,15 +165,25 @@ export const ProfilePage = () => {
               </div>
             </div>
 
-            <div style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '10px 12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <ShieldCheck size={16} color="var(--accent)" />
-              <div>
-                <div style={{ fontSize: 'var(--text-sm)', fontWeight: 700, color: 'var(--accent)' }}>{freezes} Shield</div>
-                <div style={{ fontSize: '0.65rem', color: 'var(--text-tertiary)' }}>Discipline Freeze</div>
+            <div style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '10px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <ShieldCheck size={16} color="var(--accent)" />
+                <div>
+                  <div style={{ fontSize: 'var(--text-sm)', fontWeight: 700, color: 'var(--accent)' }}>{freezes} Shield</div>
+                  <div style={{ fontSize: '0.65rem', color: 'var(--text-tertiary)' }}>Freeze Available</div>
+                </div>
               </div>
+
+              <FreezeButton freezesRemaining={freezes} currentStreak={streakCount} size="xs" variant="ghost" />
             </div>
           </div>
         </Card>
+
+        {/* Phase 5: Social Identity & Board Settings */}
+        <SocialIdentityForm />
+
+        {/* Phase 4: Warrior Badge Shelf on Profile */}
+        <BadgeShelf compact={false} />
 
         {/* Settings Form */}
         {isLoading ? (
