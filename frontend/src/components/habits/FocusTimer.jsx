@@ -7,6 +7,7 @@ import { Badge } from '../ui/Badge';
 import { Modal } from '../ui/Modal';
 import { showToast } from '../ui/Toast';
 import { startFocus, getActiveFocus, finishFocus } from '../../api/habits';
+import { trackEvent } from '../../lib/trackEvent';
 
 export const FocusTimer = () => {
   const queryClient = useQueryClient();
@@ -48,7 +49,8 @@ export const FocusTimer = () => {
   // Start Focus Mutation
   const startMutation = useMutation({
     mutationFn: (mins) => startFocus(mins),
-    onSuccess: () => {
+    onSuccess: (data, mins) => {
+      trackEvent('focus_start', { minutes: mins || selectedMinutes });
       showToast('Focus mode activated! Direct your focus on active missions.', 'success');
       queryClient.invalidateQueries({ queryKey: ['habits', 'activeFocus'] });
       refetchActive();

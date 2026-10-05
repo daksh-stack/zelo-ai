@@ -37,11 +37,16 @@ import { SocraticProbeModal } from '../components/skill/SocraticProbeModal';
 import { MicroQuizModal } from '../components/tasks/MicroQuizModal';
 import { FocusTimer } from '../components/habits/FocusTimer';
 import { ChallengeList } from '../components/habits/ChallengeList';
+import { trackEvent } from '../lib/trackEvent';
 
 export const Dashboard = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const setSummary = useAppStore((s) => s.setSummary);
+
+  useEffect(() => {
+    trackEvent('dashboard_open', { mode: 'skill' });
+  }, []);
 
   const [pendingTaskId, setPendingTaskId] = useState(null);
   const [showCelebration, setShowCelebration] = useState(false);
@@ -124,6 +129,8 @@ export const Dashboard = () => {
       showToast(err?.response?.data?.detail || 'Failed to update task status.', 'error');
     },
     onSuccess: async (data, variables) => {
+      trackEvent('task_complete', { status: variables.status });
+
       const [newSummary, newTasksData] = await Promise.all([
         refetchSummary(),
         refetchTasks(),

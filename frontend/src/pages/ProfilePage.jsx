@@ -12,6 +12,7 @@ import {
   ShieldCheck,
   Video,
   BookOpen,
+  MessageSquare,
 } from 'lucide-react';
 import { AppShell } from '../components/layout/AppShell';
 import { Card } from '../components/ui/Card';
@@ -27,11 +28,14 @@ import { useAuthStore } from '../store/authStore';
 import { FreezeButton } from '../components/habits/FreezeButton';
 import { BadgeShelf } from '../components/habits/BadgeShelf';
 import { SocialIdentityForm } from '../components/social/SocialIdentityForm';
+import { ReminderPrefs } from '../components/growth/ReminderPrefs';
+import { FeedbackModal } from '../components/growth/FeedbackModal';
 
 export const ProfilePage = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const logout = useAuthStore((s) => s.logout);
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
 
   const { data: user } = useQuery({ queryKey: ['me'], queryFn: getMeApi });
   const { data: summary } = useQuery({ queryKey: ['progressSummary'], queryFn: getProgressSummaryApi });
@@ -143,9 +147,14 @@ export const ProfilePage = () => {
               </div>
             </div>
 
-            <Button variant="danger" size="sm" leftIcon={LogOut} onClick={handleLogout}>
-              Sign Out
-            </Button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Button variant="ghost" size="sm" leftIcon={MessageSquare} onClick={() => setIsFeedbackOpen(true)}>
+                Send Feedback
+              </Button>
+              <Button variant="danger" size="sm" leftIcon={LogOut} onClick={handleLogout}>
+                Sign Out
+              </Button>
+            </div>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', marginTop: '20px' }}>
@@ -184,6 +193,9 @@ export const ProfilePage = () => {
 
         {/* Phase 4: Warrior Badge Shelf on Profile */}
         <BadgeShelf compact={false} />
+
+        {/* Phase 6: Growth Reminder Preferences */}
+        <ReminderPrefs />
 
         {/* Settings Form */}
         {isLoading ? (
@@ -347,6 +359,8 @@ export const ProfilePage = () => {
           </form>
         )}
       </div>
+
+      <FeedbackModal isOpen={isFeedbackOpen} onClose={() => setIsFeedbackOpen(false)} />
     </AppShell>
   );
 };

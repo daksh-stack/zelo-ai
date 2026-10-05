@@ -14,6 +14,13 @@ class Settings(BaseSettings):
 
     BACKEND_CORS_ORIGINS: List[str] = []
 
+    # Phase 6
+    SENTRY_DSN: str | None = None
+    ENVIRONMENT: str = "development"  # development | production
+    REMINDER_ENABLED: bool = True
+    APP_PUBLIC_URL: str = "https://zelo-ai.vercel.app"
+    SUPPORT_EMAIL: str | None = None
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

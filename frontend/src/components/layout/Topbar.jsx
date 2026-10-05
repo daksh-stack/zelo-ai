@@ -1,14 +1,17 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Flame, Shield } from 'lucide-react';
+import { Flame, Shield, MessageSquare } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { useAppStore } from '../../store/appStore';
 import { ModeSwitchHeader } from './ModeSwitchHeader';
+import { NotificationBell } from '../growth/NotificationBell';
+import { FeedbackModal } from '../growth/FeedbackModal';
 
 export const Topbar = ({ title }) => {
   const location = useLocation();
   const user = useAuthStore((s) => s.user);
   const summary = useAppStore((s) => s.summary);
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
 
   const isRescue = location.pathname.startsWith('/exam-rescue');
 
@@ -73,8 +76,34 @@ export const Topbar = ({ title }) => {
         </div>
       </div>
 
-      {/* Right: compact stat pills */}
+      {/* Right: compact stat pills + growth ops */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+        {/* Notification Bell */}
+        <NotificationBell />
+
+        {/* Feedback Trigger */}
+        <button
+          onClick={() => setIsFeedbackOpen(true)}
+          title="Send feedback or bug report"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '36px',
+            height: '36px',
+            borderRadius: 'var(--radius-md)',
+            background: 'var(--bg-elevated)',
+            border: '1px solid var(--border)',
+            color: 'var(--text-secondary)',
+            cursor: 'pointer',
+            transition: 'all var(--t-fast)',
+          }}
+        >
+          <MessageSquare size={16} />
+        </button>
+
+        <div style={{ width: '1px', height: '20px', background: 'var(--border)', margin: '0 2px' }} />
+
         {/* Streak */}
         {streak > 0 && (
           <div
@@ -144,6 +173,8 @@ export const Topbar = ({ title }) => {
           }
         }
       `}</style>
+
+      <FeedbackModal isOpen={isFeedbackOpen} onClose={() => setIsFeedbackOpen(false)} />
     </header>
   );
 };

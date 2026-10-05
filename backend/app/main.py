@@ -15,7 +15,7 @@ from app.api.v1.skill_path import router as skill_path_router
 from app.api.v1.insights import router as insights_router
 from app.api.v1.habits import router as habits_router
 from app.api.v1.social import router as social_router
-
+from app.api.v1.growth import router as growth_router
 
 # Later you will add more routers here
 # from app.api.v1.auth import router as auth_router
@@ -46,6 +46,16 @@ def setup_logging():
 setup_logging()
 logger = logging.getLogger(__name__)
 
+
+
+_sentry_dsn = (getattr(settings, "SENTRY_DSN", None) or "").strip()
+if _sentry_dsn:
+    import sentry_sdk
+    sentry_sdk.init(
+        dsn=_sentry_dsn,
+        environment=settings.ENVIRONMENT,
+        traces_sample_rate=0.1 if settings.ENVIRONMENT == "production" else 0.0,
+    )
 # ---------- Create FastAPI App ----------
 app = FastAPI(
     title=settings.APP_NAME,
@@ -86,7 +96,7 @@ app.include_router(skill_path_router, prefix="/api/v1")
 app.include_router(insights_router, prefix="/api/v1")
 app.include_router(habits_router, prefix="/api/v1")
 app.include_router(social_router, prefix="/api/v1")
-
+app.include_router(growth_router, prefix="/api/v1")
 # Later you will add:
 # app.include_router(auth_router, prefix="/api/v1")
 # app.include_router(users_router, prefix="/api/v1")

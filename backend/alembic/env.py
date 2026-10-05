@@ -13,6 +13,8 @@ from alembic import context
 from app.models.quiz import QuizAttempt
 from app.models.habits import StreakFreezeLog, Challenge, UserBadge, FocusSession
 from app.models.social import Friendship, Circle, CircleMember, FriendStatus
+from app.models.growth import NotificationPreference, InAppNotification, FeedbackTicket, AnalyticsEvent
+
 
 # --------------------------------------------------
 # Import your project settings and Base

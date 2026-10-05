@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { Users, AlertCircle, ArrowRight, ShieldCheck, Trophy, KeyRound } from 'lucide-react';
@@ -10,10 +10,15 @@ import { FriendList } from '../components/social/FriendList';
 import { PendingRequests } from '../components/social/PendingRequests';
 import { CirclePanel } from '../components/social/CirclePanel';
 import { LeaderboardTable } from '../components/social/LeaderboardTable';
+import { trackEvent } from '../lib/trackEvent';
 
 export const SquadPage = () => {
   const navigate = useNavigate();
   const [selectedCircleId, setSelectedCircleId] = useState(null);
+
+  useEffect(() => {
+    trackEvent('squad_open', {});
+  }, []);
 
   const { data: socialMe } = useQuery({
     queryKey: ['socialMe'],

@@ -9,6 +9,7 @@ import { Input } from '../components/ui/Input';
 import { Spinner } from '../components/ui/Spinner';
 import { showToast } from '../components/ui/Toast';
 import { createExamSession, listExamSessions } from '../api/examRescue';
+import { trackEvent } from '../lib/trackEvent';
 
 const SUBJECT_PRESETS = ['OS', 'DBMS', 'CN', 'DSA', 'COA'];
 
@@ -76,7 +77,8 @@ export const ExamRescueSetup = () => {
   const createMutation = useMutation({
     mutationFn: (payload) => createExamSession(payload),
     onSuccess: (data) => {
-      showToast('Timed rescue plan created! Let’s lock in.', 'success');
+      trackEvent('exam_rescue_start', { strategy });
+      showToast("Timed rescue plan created! Let's lock in.", 'success');
       const sessionId = data.id || data.session_id;
       navigate(`/exam-rescue/session/${sessionId}`);
     },
